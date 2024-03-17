@@ -18,7 +18,6 @@ function sendOptions(contact, options) {
 }
 
 client.on('qr', (qr) => {
-    
     console.log('QR RECEIVED');
     qrcode.generate(qr, { small: true });
 });
@@ -27,13 +26,33 @@ client.on('ready', () => {
     console.log('Conectado!');
 });
 
-client.on('message', msg => {
+client.on('message', async msg => {
     const contact = msg.from;
+    let nomeWhats;
+    try {
+        nomeWhats = await msg.getContact().then(contact => contact.pushname || 'desconhecido');
+    } catch (error) {
+        nomeWhats = 'desconhecido';
+        console.error('Erro ao obter nome do contato:', error);
+    }
+    
     const body = msg.body.toLowerCase();
+    
+    console.log('nome: ', nomeWhats);
+    console.log('Contato: ', contact);
+    console.log('mensagem: ', body);
+
+    const date = new Date();
+    const dth_horas = date.getHours();
+
+    if (dth_horas < 8 || dth_horas >= 16){
+        sendMessageWithRetry(contact, `Desculpe ${nomeWhats}, meu horário de trabalho é das 8h às 16h.`);
+        return;
+    }
 
     switch (body) {
         case 'oi':
-            sendMessageWithRetry(contact, 'Olá, eu sou Thiago programador da ativmob, como posso ajudar?');
+            sendMessageWithRetry(contact, `Olá ${nomeWhats}, eu sou Thiago programador da ativmob, como posso ajudar?`);
             sendOptions(contact, ['1. Problemas na integração?', '2. Deseja ajuda técnica?', '3. Outros']);
             break;
         case '1':
